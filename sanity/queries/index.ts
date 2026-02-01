@@ -1,5 +1,5 @@
 import { sanityFetch } from "../lib/live";
-import { DEAL_PRODUCTS } from "./query";
+import { DEAL_PRODUCTS, PRODUCT_BY_SLUG_QUERY } from "./query";
 
 const getCategories =  async(quantity?:number)=>{
     try{
@@ -27,6 +27,20 @@ const getDealProducts = async () => {
         console.log("Error fetching all products:",error);
         return [];
     };
-} 
+};
+const getProductBySlug = async(slug:string)=>{
+    try {
+        const product = await sanityFetch({
+            query:PRODUCT_BY_SLUG_QUERY,
+            params:{
+                slug,
+            },
+        });
+        return product?.data || null;
+    } catch (error) {
+        console.error("Error fetching product by ID:",error);
+        return null;
+    }
+}
 
-export {getCategories,getDealProducts};
+export {getCategories,getDealProducts,getProductBySlug};

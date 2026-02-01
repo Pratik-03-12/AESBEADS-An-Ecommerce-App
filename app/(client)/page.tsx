@@ -8,7 +8,6 @@ import { getCategories } from '@/sanity/queries'
 
 const Home = async () => {
   const categories = await getCategories(6);
-  console.log(categories);
   return (
     <div className="w-full" style={{backgroundColor:'var(--color-shop-light-pink)'}}>
       <Container>

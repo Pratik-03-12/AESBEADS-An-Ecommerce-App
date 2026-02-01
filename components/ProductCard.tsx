@@ -15,14 +15,16 @@ const ProductCard = ({ product }: { product: Product }) => {
     <div className="text-sm border-[1px] border-shop-warmterracotta/20 rounded-md bg-white group">
       <div className="relative group overflow-hidden bg-shop-beige5">
         {product?.images && (
-          <Image
-            src={urlFor(product?.images[0]).url()}
-            alt="Product Image"
-            loading="lazy"
-            width={700}
-            height={700}
-            className={`w-full h-64 object-contain overflow-hidden transition-transform bg-shop-beige6 hoverEffect ${product?.stock !== 0 ? "group-hover:scale-105" : "opacity-50"}`}
-          />
+          <Link href={`/product/${product?.slug?.current}`}>
+            <Image
+              src={urlFor(product?.images[0]).url()}
+              alt="Product Image"
+              loading="lazy"
+              width={700}
+              height={700}
+              className={`w-full h-64 object-contain overflow-hidden transition-transform bg-shop-beige6 hoverEffect ${product?.stock !== 0 ? "group-hover:scale-105" : "opacity-50"}`}
+            />
+          </Link>
         )}
         <AddToWishlistButton product={product} />
         {product?.status === "sale" && (
@@ -52,11 +54,11 @@ const ProductCard = ({ product }: { product: Product }) => {
       </div>
       <div className="p-3 flex flex-col gap-2">
         {product?.categories && (
-          <p className="uppercase line-clamp-1 text-xs text-shop-beige6/80 ">
+          <p className="uppercase line-clamp-1 text-xs text-shop-beige6 ">
             {product.categories.map((cat) => cat).join(", ")}
           </p>
         )}
-        <Title className="text-sm line-clamp-1">{product?.name}</Title>
+        <Link href={`/product/${product?.slug?.current}`}><Title className="text-sm line-clamp-1">{product?.name}</Title></Link>
         <div>
             <div className="flex items-center">
                 {[...Array(5)].map((_,index)=>(
@@ -71,7 +73,7 @@ const ProductCard = ({ product }: { product: Product }) => {
            <p className={`text-shop-beige2/80 font-semibold ${product?.stock === 0 ? "text-shop-coralpeach/80":"text-shop-beige2/80 font-semibold"}`}>
             {(product?.stock as number)>0?product?.stock:"unavailable"}</p>
         </div>
-        <PriceView price={product?.price} discount={product?.price} className="text-sm"/>
+        <PriceView price={product?.price} discount={product?.discount} className="text-sm"/>
         <AddToCartButton product={product} className="w-36  rounded-full"/>
       </div>
     </div>

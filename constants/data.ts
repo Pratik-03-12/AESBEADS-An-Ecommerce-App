@@ -19,4 +19,5 @@ export const categoriesData = [
     {title:"Earrings",href:"earrings"},
     {title:"Phone Charm",href:"phone-charm"},
     {title:"Keychains",href:"keychains"},
+    {title:"Combo",href:"combo"},
 ];

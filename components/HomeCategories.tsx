@@ -13,10 +13,13 @@ const HomeCategories = ({ categories }: { categories: Category[] }) => {
       </Title>
       <div className="mt-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {categories?.map((category) => (
-          <div key={category?._id} className="bg-shop_light_bg p-5 flex items-center gap-3 group">
+          <div
+            key={category?._id}
+            className="bg-shop_light_bg p-5 flex items-center gap-3 group"
+          >
             {category?.image && (
               <div className="overflow-hidden border border-shop-coralpeach/30 hover:border-shop-coralpeach hoverEffect w-20 h-20 p-1">
-                <Link href = {`/category/${category?.slug?.current}`}>
+                <Link href={`/category/${category?.slug?.current}`}>
                   <Image
                     src={urlFor(category?.image).url()}
                     alt="category image"
@@ -28,10 +31,13 @@ const HomeCategories = ({ categories }: { categories: Category[] }) => {
               </div>
             )}
             <div className="space-y-1">
+              <Link href={`/category/${category?.slug?.current}`}>
                 <h3 className="text-base font-semibold">{category?.title}</h3>
-                <p className="text-sm">
-                    <span className="font-bold text-shop-deepbeige">{`(${category?.productCount})`}</span>{" "}items Available
-                </p>
+              </Link>
+              <p className="text-sm">
+                <span className="font-bold text-shop-deepbeige">{`(${category?.productCount})`}</span>{" "}
+                items Available
+              </p>
             </div>
           </div>
         ))}

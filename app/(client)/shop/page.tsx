@@ -1,8 +1,13 @@
+import Shop from '@/components/Shop';
+import { getCategories } from '@/sanity/queries';
 import React from 'react'
 
-const ShopPage = () => {
+const ShopPage = async() => {
+  const categories = await getCategories();
   return (
-    <div>ShopPage</div>
+    <div>
+      <Shop categories = {categories}/>
+    </div>
   )
 }
 
