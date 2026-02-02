@@ -9,6 +9,7 @@ import AddToWishlistButton from "./AddToWishlistButton";
 import Title from "./Title";
 import PriceView from "./PriceView";
 import AddToCartButton from "./AddToCartButton";
+import ProductSideMenu from "./ProductSideMenu";
 
 const ProductCard = ({ product }: { product: Product }) => {
   return (
@@ -26,7 +27,7 @@ const ProductCard = ({ product }: { product: Product }) => {
             />
           </Link>
         )}
-        <AddToWishlistButton product={product} />
+        <ProductSideMenu product={product}/>
         {product?.status === "sale" && (
           <p className="absolute top-2 left-2 z-10 text-xs border-shop-deepbeige/50 px-2 rounded-full group-hover:border-shop-beige4 group-hover:text-shop-beige4 hoverEffect">
             Sale!

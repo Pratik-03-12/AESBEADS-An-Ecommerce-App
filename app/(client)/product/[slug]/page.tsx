@@ -6,6 +6,7 @@ import PriceView from "@/components/PriceView";
 import ProductCharacteristics from "@/components/ProductCharacteristics";
 import { getProductBySlug } from "@/sanity/queries";
 import { StarIcon } from "lucide-react";
+import { notFound } from "next/navigation";
 import React from "react";
 
 const SingleProductPage = async ({
@@ -15,6 +16,9 @@ const SingleProductPage = async ({
 }) => {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
+  if(!product){
+    return notFound();
+  }
 
   return (
     <Container className="flex flex-col md:flex-row gap-10 py-10">
