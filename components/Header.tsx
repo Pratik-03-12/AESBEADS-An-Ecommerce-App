@@ -10,6 +10,7 @@ import FavouriteButton from './FavouriteButton'
 import SignIn from './SignIn'
 import MobileMenu from './MobileMenu'
 import { useSession, signOut } from 'next-auth/react'
+import useStore from '@/store'
 import { Button } from '@/components/ui/button'
 import { User, LogOut } from 'lucide-react'
 import Link from 'next/link'
@@ -74,7 +75,11 @@ const Header = () => {
                     </Link>
                     <DropdownMenuItem
                       className="cursor-pointer"
-                      onSelect={() => signOut()}
+                      onSelect={() => {
+                        signOut()
+                        useStore.getState().resetCart()
+                        useStore.getState().resetFavourite()
+                      }}
                     >
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
