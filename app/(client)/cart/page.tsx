@@ -74,34 +74,96 @@ const CartPage = () => {
 
   const handleResetCart = () => {
     const confirmed = window.confirm(
-      "Are you sure you want to reset your cart?"
+      "Are you sure you want to reset your cart?",
     );
     if (confirmed) {
       resetCart();
       toast.success("Cart reset successfully!");
     }
   };
-
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      document.body.appendChild(script);
+    });
+  };
+  
   const handleCheckout = async () => {
+    if (!selectedAddress) {
+      toast.error("Please select a delivery address");
+      return;
+    }
+  
     setLoading(true);
+  
     try {
-      const metadata: Metadata = {
-        orderNumber: crypto.randomUUID(),
-        customerName: user?.name ?? "Unknown",
-        customerEmail: user?.email ?? "Unknown",
-        userId: (user as { id?: string })?.id ?? "",
-        address: selectedAddress,
+      await loadRazorpay();
+  
+      const res = await fetch("/api/razorpay", {
+        method: "POST",
+        body: JSON.stringify({
+          amount: getTotalPrice(),
+        }),
+      });
+  
+      const order = await res.json();
+  
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY,
+        amount: order.amount,
+        currency: "INR",
+        name: "AES BEADS",
+        description: "Order Payment",
+        order_id: order.id,
+  
+        handler: async function (response: any) {
+
+          const verifyRes = await fetch("/api/verify-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          });
+        
+          const data = await verifyRes.json();
+        
+          if (data.success) {
+            resetCart();
+        
+            window.location.href = `/success?payment_id=${response.razorpay_payment_id}&order_id=${response.razorpay_order_id}`;
+          } else {
+            toast.error("Payment verification failed");
+          }
+        },
+        
+  
+        prefill: {
+          name: user?.name,
+          email: user?.email,
+        },
+  
+        theme: {
+          color: "#c46a3a",
+        },
       };
-      const checkoutUrl = await createCheckoutSession(groupedItems, metadata);
-      if (checkoutUrl) {
-        window.location.href = checkoutUrl;
-      }
-    } catch (error) {
-      console.error("Error creating checkout session:", error);
+  
+      const razorpay = new (window as any).Razorpay(options);
+      razorpay.open();
+    } catch (err) {
+      console.error(err);
+      toast.error("Payment failed");
     } finally {
       setLoading(false);
     }
   };
+  
+
+              
 
   return (
     <div className="bg-shop_light_bg pb-52 md:pb-10">
@@ -177,7 +239,7 @@ const CartPage = () => {
                                         onClick={() => {
                                           deleteCartProduct(product?._id);
                                           toast.success(
-                                            "Product deleted successfully!"
+                                            "Product deleted successfully!",
                                           );
                                         }}
                                         className="w-4 h-4 md:w-5 md:h-5 mr-1 text-shop-deepbeige hover:text-shop-coralpeach hoverEffect"
@@ -281,7 +343,10 @@ const CartPage = () => {
                                 </div>
                               ))}
                             </RadioGroup>
-                            <Button variant="outline" className="w-full mt-4 border-shop-deepbeige text-shop-deepbeige hover:bg-shop-beige6 hover:border-shop-warmterracotta hover:text-shop-warmterracotta">
+                            <Button
+                              variant="outline"
+                              className="w-full mt-4 border-shop-deepbeige text-shop-deepbeige hover:bg-shop-beige6 hover:border-shop-warmterracotta hover:text-shop-warmterracotta"
+                            >
                               Add New Address
                             </Button>
                           </CardContent>
