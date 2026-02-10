@@ -1,9 +1,4 @@
 "use client";
-
-import {
-  createCheckoutSession,
-  Metadata,
-} from "@/actions/createCheckoutSession";
 import Container from "@/components/container";
 import EmptyCart from "@/components/EmptyCart";
 import NoAccess from "@/components/NoAccess";
@@ -89,27 +84,35 @@ const CartPage = () => {
       document.body.appendChild(script);
     });
   };
-  
+
   const handleCheckout = async () => {
     if (!selectedAddress) {
       toast.error("Please select a delivery address");
       return;
     }
-  
+
     setLoading(true);
-  
+
     try {
       await loadRazorpay();
-  
+
       const res = await fetch("/api/razorpay", {
         method: "POST",
         body: JSON.stringify({
           amount: getTotalPrice(),
+          orderNumber: crypto.randomUUID(),
+          userId: (user as any)?.id,
+          customerName: user?.name,
+          customerEmail: user?.email,
+          groupedItems,
+          totalPrice: getTotalPrice(),
+          amountDiscount: getSubTotalPrice() - getTotalPrice(),
+          address: selectedAddress,
         }),
       });
-  
+
       const order = await res.json();
-  
+
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY,
         amount: order.amount,
@@ -117,9 +120,8 @@ const CartPage = () => {
         name: "AES BEADS",
         description: "Order Payment",
         order_id: order.id,
-  
-        handler: async function (response: any) {
 
+        handler: async function (response: any) {
           const verifyRes = await fetch("/api/verify-payment", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -129,29 +131,28 @@ const CartPage = () => {
               razorpay_signature: response.razorpay_signature,
             }),
           });
-        
+
           const data = await verifyRes.json();
-        
+
           if (data.success) {
             resetCart();
-        
+
             window.location.href = `/success?payment_id=${response.razorpay_payment_id}&order_id=${response.razorpay_order_id}`;
           } else {
             toast.error("Payment verification failed");
           }
         },
-        
-  
+
         prefill: {
           name: user?.name,
           email: user?.email,
         },
-  
+
         theme: {
           color: "#c46a3a",
         },
       };
-  
+
       const razorpay = new (window as any).Razorpay(options);
       razorpay.open();
     } catch (err) {
@@ -161,9 +162,6 @@ const CartPage = () => {
       setLoading(false);
     }
   };
-  
-
-              
 
   return (
     <div className="bg-shop_light_bg pb-52 md:pb-10">

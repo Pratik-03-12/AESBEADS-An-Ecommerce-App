@@ -7,13 +7,33 @@ const razorpay = new Razorpay({
 });
 
 export async function POST(req: Request) {
-  const { amount } = await req.json();
+  const {
+    amount,
+    orderNumber,
+    userId,
+    customerName,
+    customerEmail,
+    groupedItems,
+    totalPrice,
+    amountDiscount,
+    address,
+  }  = await req.json();
 
   const order = await razorpay.orders.create({
-    amount: amount * 100, // rupees → paise
+    amount: amount * 100,
     currency: "INR",
-    receipt: "order_" + Date.now(),
+    receipt: "rcpt_" + Date.now(),
+  
+    notes: {
+      orderNumber,
+      userId,
+      customerName,
+      customerEmail,
+      products: JSON.stringify(groupedItems),
+      totalPrice,
+      amountDiscount,
+      address: JSON.stringify(address),
+    },
   });
-
   return NextResponse.json(order);
 }
