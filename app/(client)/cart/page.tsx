@@ -95,6 +95,20 @@ const CartPage = () => {
 
     try {
       await loadRazorpay();
+      // 🔍 LIVE STOCK VALIDATION (prevents mid-session issues)
+      const stockCheck = await fetch("/api/validate-stock", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: groupedItems }),
+      });
+
+      const stockResult = await stockCheck.json();
+
+      if (!stockResult.ok) {
+        toast.error("Some items are out of stock. Please refresh your cart.");
+        setLoading(false);
+        return;
+      }
 
       const res = await fetch("/api/razorpay", {
         method: "POST",

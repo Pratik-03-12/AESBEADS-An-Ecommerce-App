@@ -12,7 +12,7 @@ import MobileMenu from './MobileMenu'
 import { useSession, signOut } from 'next-auth/react'
 import useStore from '@/store'
 import { Button } from '@/components/ui/button'
-import { User, LogOut } from 'lucide-react'
+import { User, LogOut, Package } from 'lucide-react'
 import Link from 'next/link'
 import {
   DropdownMenu,
@@ -32,10 +32,19 @@ const Header = () => {
               <Logo/>
             </div>
             <HeaderMenu />
-            <div className='w-auto md:w-1/3 flex items-center justify-end gap-5'>
+            <div className='w-auto md:w-1/3 flex items-center justify-end gap-3'>
               <SearchBar/>
               <FavouriteButton/>
               <Carticon/>
+              {status === "authenticated" && session && (
+                <Link
+                  href="/orders"
+                  aria-label="View your orders"
+                  className="relative inline-flex items-center justify-center rounded-full p-1.5 text-shop-deepbeige hover:text-shop-coralpeach hover:bg-shop-beige6/70 transition-colors"
+                >
+                  <Package className="w-5 h-5" />
+                </Link>
+              )}
               {status === "loading" ? (
                 <div className="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
               ) : session ? (

@@ -18,10 +18,13 @@ interface Props{
 const Shop = ({categories}:Props) => {
     const searchParams = useSearchParams();
     const categoryParams = searchParams?.get("category");
+    const searchQuery = (searchParams?.get("search") || "").trim() || null;
+
     const [products, setProducts] = useState<Product[]>([]);
     const [loading,setLoading] = useState(false);
     const [selectedCategory,setSelectedCategory] = useState<string | null>(categoryParams||null);
     const [selectedPrice,setSelectedPrice] = useState<string | null>(null);
+
     const fetchProducts = async()=>{
         setLoading(true);
         try {
@@ -32,8 +35,20 @@ const Shop = ({categories}:Props) => {
                 minPrice = min;
                 maxPrice = max;
             }
-            const query = `*[_type == 'product' && (!defined($selectedCategory) || references(*[_type == "category" && slug.current == $selectedCategory]._id)) && price >= $minPrice && price <= $maxPrice] | order(name asc){...,"categories":categories[]->title}`;
-            const data = await client.fetch(query,{selectedCategory,minPrice,maxPrice},{next:{revalidate:0}});
+
+            const search = searchQuery ? `${searchQuery}*` : null;
+
+            const query = `*[_type == 'product' 
+                && ($selectedCategory == null || references(*[_type == "category" && slug.current == $selectedCategory]._id)) 
+                && price >= $minPrice && price <= $maxPrice
+                && ($search == null || name match $search || description match $search)
+            ] | order(name asc){...,"categories":categories[]->title}`;
+
+            const data = await client.fetch(
+                query,
+                {selectedCategory,minPrice,maxPrice,search},
+                {next:{revalidate:0}}
+            );
             setProducts(data);
         } catch (error) {
             console.log("Shop product fetching Error",error);
@@ -41,16 +56,17 @@ const Shop = ({categories}:Props) => {
             setLoading(false);
         }
     }
+
     useEffect(()=>{
         fetchProducts();
-    },[selectedCategory,selectedPrice]);
+    },[selectedCategory,selectedPrice,searchQuery]);
   return (
     <div className='border-t'>
         <Container className='mt-5'>
             <div className='sticky top-0 z-10 mb-5'>
                 <div className='flex items-center justify-between'>
                     <Title className='text-lg uppercase tracking-wide'>Get the products as your needs</Title>
-                    {(selectedCategory!==null || selectedPrice!==null) && (<button onClick={()=>{setSelectedCategory(null);setSelectedPrice(null);}} className='text-shop-warmterracotta underline text-sm mt-2 font-medium hover:text-darkRed hoverEffect'>
+                    {(selectedCategory!==null || selectedPrice!==null || searchQuery!==null) && (<button onClick={()=>{setSelectedCategory(null);setSelectedPrice(null);}} className='text-shop-warmterracotta underline text-sm mt-2 font-medium hover:text-darkRed hoverEffect'>
                         Reset Filters
                     </button>)}
                 </div>

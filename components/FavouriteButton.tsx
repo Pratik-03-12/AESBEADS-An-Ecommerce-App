@@ -37,10 +37,14 @@ const FavouriteButton = ({
   return (
     <>
       {!showProduct ? (
-        <Link href={"/wishlist"} className="group relative">
-          <Heart className="w-5 h-5 hover:text-shop_orange hoverEffect" />
-          <span className="absolute -top-1 -right-1 bg-amber-900 text-white h-3.5 w-3.5 rounded-full text-xs font-semibold flex items-center justify-center">
-            {favouriteProduct?.length?favouriteProduct.length:0}
+        <Link
+          href={"/wishlist"}
+          className="group relative inline-flex items-center justify-center rounded-full p-1.5 text-shop-deepbeige hover:text-shop-coralpeach hover:bg-shop-beige6/70 transition-colors"
+          aria-label="View wishlist"
+        >
+          <Heart className="w-5 h-5" />
+          <span className="absolute -top-0.5 -right-0.5 bg-amber-900 text-white h-3.5 w-3.5 rounded-full text-xs font-semibold flex items-center justify-center">
+            {favouriteProduct?.length ? favouriteProduct.length : 0}
           </span>
         </Link>
       ) : (

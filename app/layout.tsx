@@ -4,8 +4,8 @@ import "./globals.css";
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <html lang="en">
-      <body className="font-poppins antialiased">
+    <html lang="en" suppressHydrationWarning>
+      <body className="font-poppins antialiased" suppressHydrationWarning>
         <Providers>
           {children}
           <Toaster

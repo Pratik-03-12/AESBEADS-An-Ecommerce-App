@@ -7,6 +7,12 @@ const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
   key_secret: process.env.RAZORPAY_KEY_SECRET!,
 });
+
+type WebhookCartItem = {
+  product: { _id: string; name?: string; price?: number };
+  quantity: number;
+};
+
 export async function POST(req: Request) {
   const rawBody = await req.text();
   const signature = req.headers.get("x-razorpay-signature")!;
@@ -29,6 +35,55 @@ export async function POST(req: Request) {
   const payment = event.payload.payment.entity;
   const notes = payment.notes || {};
 
+  const parsedProducts: WebhookCartItem[] = Array.isArray(
+    JSON.parse(notes.products || "[]"),
+  )
+    ? JSON.parse(notes.products || "[]")
+    : [];
+
+  if (!parsedProducts.length) {
+    console.error("Webhook: No products found in notes");
+    return NextResponse.json(
+      { success: false, reason: "NO_PRODUCTS_IN_NOTES" },
+      { status: 400 },
+    );
+  }
+
+  const productIds = Array.from(
+    new Set(
+      parsedProducts
+        .map((item) => item.product?._id)
+        .filter((id): id is string => typeof id === "string"),
+    ),
+  );
+
+  // Re-check stock at webhook time to avoid overselling
+  const products = await client.fetch<
+    { _id: string; stock?: number }[]
+  >(`*[_id in $ids]{ _id, stock }`, { ids: productIds });
+
+  const productMap = new Map(products.map((p) => [p._id, p] as const));
+
+  const insufficient = parsedProducts.find((item) => {
+    const product = productMap.get(item.product._id);
+    const available = product?.stock ?? 0;
+    return !product || available < item.quantity;
+  });
+
+  if (insufficient) {
+    console.error("Webhook: Insufficient stock for product", {
+      productId: insufficient.product._id,
+    });
+    return NextResponse.json(
+      {
+        success: false,
+        reason: "INSUFFICIENT_STOCK_AT_CAPTURE",
+        productId: insufficient.product._id,
+      },
+      { status: 409 },
+    );
+  }
+
   //CREATE INVOICE IN RAZORPAY
   const invoice = await razorpay.invoices.create({
     type: "invoice",
@@ -36,14 +91,34 @@ export async function POST(req: Request) {
       name: notes.customerName,
       email: notes.customerEmail,
     },
-    line_items: JSON.parse(notes.products).map((item: any) => ({
+    line_items: parsedProducts.map((item) => ({
       name: item.product.name,
-      amount: item.product.price * 100,
+      amount: (item.product.price ?? 0) * 100,
       currency: "INR",
       quantity: item.quantity,
     })),
     // email_notify: 1,
   });
+
+  // ✅ UPDATE STOCK HERE (after re-check)
+  const transaction = client.transaction();
+
+  for (const item of parsedProducts) {
+    transaction.patch(item.product._id, {
+      dec: { stock: item.quantity },
+    });
+  }
+
+  try {
+    await transaction.commit();
+  } catch (err) {
+    console.error("Webhook: Stock update transaction failed", err);
+    return NextResponse.json(
+      { success: false, reason: "STOCK_UPDATE_FAILED" },
+      { status: 500 },
+    );
+  }
+
   // notes will carry frontend metadata (we’ll add this in checkout)
   try {
     await client.create({
@@ -59,7 +134,7 @@ export async function POST(req: Request) {
       customername: notes.customerName,
       customeremail: notes.customerEmail,
 
-      products: JSON.parse(notes.products).map((item: any) => ({
+      products: parsedProducts.map((item) => ({
         _key: crypto.randomUUID(),
         product: {
           _type: "reference",
